@@ -107,7 +107,7 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
                 queue=self.queue_name,
                 routing_key=routing_key,
             )
-            self.consuming = False
+        self.consuming = False
 
     def start_consuming(self, on_message_callback):
         def handle_message(channel, method, properties, body):
