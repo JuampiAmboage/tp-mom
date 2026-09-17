@@ -1,3 +1,11 @@
+"""RabbitMQ implementations of the queue and exchange middleware contracts.
+
+Queue middleware instances sharing a queue name use RabbitMQ's work-queue
+distribution. Exchange middleware instances create an exclusive queue for
+each consumer and bind it to the requested routing keys, which enables
+broadcast delivery.
+"""
+
 import pika
 from .middleware import (
     MessageMiddlewareCloseError,
@@ -22,6 +30,7 @@ def _raise_operation_error(error):
     raise MessageMiddlewareMessageError from error
 
 class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
+    """RabbitMQ work queue backed by a named shared queue."""
 
     def __init__(self, host, queue_name):
         self.connection = pika.BlockingConnection(
@@ -86,7 +95,8 @@ class MessageMiddlewareQueueRabbitMQ(MessageMiddlewareQueue):
             raise MessageMiddlewareCloseError from error
 
 class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
-    
+    """Direct exchange backed by an exclusive queue per middleware instance."""
+
     def __init__(self, host, exchange_name, routing_keys):
         self.connection = pika.BlockingConnection(
             pika.ConnectionParameters(host=host)
