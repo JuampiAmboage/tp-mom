@@ -69,13 +69,34 @@ class MessageMiddlewareExchangeRabbitMQ(MessageMiddlewareExchange):
             )
 
     def start_consuming(self, on_message_callback):
-        raise NotImplementedError
+        def handle_message(channel, method, properties, body):
+            def ack():
+                channel.basic_ack(delivery_tag=method.delivery_tag)
+
+            def nack():
+                channel.basic_nack(
+                    delivery_tag=method.delivery_tag,
+                    requeue=True,
+                )
+
+            on_message_callback(body, ack, nack)
+
+        self.channel.basic_consume(
+            queue=self.queue_name,
+            on_message_callback=handle_message,
+            auto_ack=False,
+        )
+        self.channel.start_consuming()
 
     def stop_consuming(self):
-        raise NotImplementedError
+        self.channel.stop_consuming()
 
     def send(self, message):
-        raise NotImplementedError
+        self.channel.basic_publish(
+            exchange=self.exchange_name,
+            routing_key=self.routing_keys[0],
+            body=message,
+        )
 
     def close(self):
         self.channel.close()
